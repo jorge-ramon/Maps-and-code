@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <meta charset="utf-8">
+<!--
+Created using JS Bin
+http://jsbin.com
+
+Copyright (c) 2014 by gridinoc (http://jsbin.com/suwiv/1/edit)
+
+Released under the MIT license: http://jsbin.mit-license.org
+-->
+  <title>A map that should work...</title>
+  
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.tiles.mapbox.com/mapbox.js/v1.6.4/mapbox.js'></script>
+<link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.4/mapbox.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+  
+
+<style id="jsbin-css">
+/* I should provably comment on this... 
+/*This is a style copied~pasted from the CSS found on the Internews site... It works, however, it has many variable names that are not relevant and fluff that we are not using or we would like to change. 
+/*In the future, someone should: 1-Put this into a separate CSS document liked in the head. 2-Get rid of all the fluff we are not using. And, 3-Rename all the variables so that they are relevant to our project. 
+/*-----------------------------------
+  Frontpage: Map Components
+-------------------------------------*/
+#controls {
+  position: absolute;
+  top: 75px;
+  left: 10px;
+  background: white;
+  border: 1px solid #999;
+  -moz-box-shadow: 0 0 8px rgba(0, 0, 0, .3);
+  -webkit-box-shadow: 0 0 8px rgba(0, 0, 0, .3);
+  box-shadow: 0 0 8px rgba(0, 0, 0, .3);
+  height: 50px;
+  z-index: 50;
+  width: 60px;
+  }
+  #controls a {
+    font: bold 13px/28px 'Helvetica Neue', Helvetica, sans-serif;
+    color: #404040;
+    }
+    #controls a:active {
+      background-color: #ddd;
+      box-shadow:inset rgba(0,0,0,0.1) 0px 1px 3px;
+      -moz-box-shadow:inset rgba(0,0,0,0.1) 0px 1px 3px;
+      -webkit-box-shadow:inset rgba(0,0,0,0.1) 0px 1px 3px;
+      }
+
+.wax-legends {
+  z-index: 100;
+  position: absolute;
+  background: white;
+  border: 1px solid #8C8C8C;
+  border: 1px solid rgba(0, 0, 0, .45);
+  border-bottom: 1px solid #666;
+  -moz-box-shadow: 0 1px 8px rgba(0, 0, 0, .3);
+  -webkit-box-shadow: 0 1px 8px rgba(0, 0, 0, .3);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .3);
+  right: 370px;
+  bottom: 10px;
+  padding: 10px;
+  }
+  .sources {
+    color: #000;
+    font-size: 85%;
+    }
+.wax-attribution {
+  position: absolute;
+  z-index: 10;
+  bottom: 10px;
+  left: 10px;
+  line-height: 20px;
+  font-size: 11px;
+  }
+.wax-attribution ul li {
+  float: left;
+  margin-right: 10px;
+  }
+.wax-attribution ul li a.icon {
+  height: 35px;
+  width: 120px;
+  }
+  
+/* CSS Animations */
+.map-tile-loaded {
+  -webkit-animation-name: 'fade-in';
+  -webkit-animation-timing-function: ease-in;
+  -webkit-animation-duration: .3s;
+  }
+@-webkit-keyframes fade-in {
+  from {
+    opacity: 0;
+    }
+  to {
+    opacity: 1;
+    }
+  }
+
+/*-----------------------------------
+  Frontpage: Drawer
+-------------------------------------*/
+#drawer {
+  background: rgb(41, 41, 41);
+  background: rgba(32, 32,32, 0.9);
+  color: #999;
+  position: absolute;
+  top: 0px;
+  right: 0;
+  z-index: 100;
+  width: 360px;
+  height: 100%;
+  overflow: hidden;
+  }
+  #drawer:hover {
+    overflow-y: auto;
+    }
+#drawer .overview {
+  color: #787878;
+  }
+.drawer-content-clone,
+.drawer-content {
+  position: absolute;
+  padding: 10px 15px 15px 15px;
+  width: 335px;
+  height: 100%;
+  }
+.drawer-content { z-index: 100; 
+ }
+.drawer-content-clone {
+  background: rgb(41, 41, 41);
+  z-index: 200;
+  }
+
+h2.title {
+  color: white;
+  display: block;
+  margin: 0;
+  padding: 10px 0 5px;
+  }
+.overview {
+  background: #202020 url('images/sprite.png') repeat-x bottom;
+  background-color: rgba(32,32,32,0.25);
+  border-bottom: 1px solid #303030;
+  border-bottom-color: rgba(0,0,0,0.4);
+  margin: -10px -15px 0;
+  padding: 5px 0 5px 15px;
+  }
+.section {
+  position: relative;
+  padding: 5px 0 9px;
+  border-bottom: 1px dashed #b4b4b4;
+  opacity: 0.40;
+  -moz-opacity: 0.40;
+  filter:alpha(opacity=40);
+  -moz-transition: opacity 0.2s ease-out;
+  -o-transition: opacity 0.2s ease-out;
+  -webkit-transition: opacity 0.2s ease-out;
+  transition: opacity 0.2s ease-out;
+  cursor: pointer;
+  }
+  .section:hover,
+  .section.overview,
+  .section.active {
+    opacity: 1;
+    -moz-opacity: 1;
+    filter:alpha(opacity=100);
+    }
+  .section.last {
+    border-bottom: none;
+    }
+.group {
+  float: left;
+  margin-right: 10px;
+  }
+  .group.first {
+    width: 109px;
+    width: auto!important;
+    min-width: 109px;
+    border-right: 1px dashed #505050;
+    padding-right: 10px;
+    }
+  .group.last {
+    margin-right: 0;
+    }
+.literacy {
+  width: 100%;
+  }
+ul.values li {
+  float: left;
+  margin-left: 8px;
+  width: 75px;
+  width: auto!important;
+  max-width: 75px;
+  }
+  ul.values li:first-child {
+    margin-left: 0;
+    }
+.max-width {
+  width: 55px;
+  width: auto!important;
+  max-width: 55px;
+  }
+
+
+/* Title's like Radio, Internet .. */
+.media {
+  background-image: url(images/sprite.png);
+  background-repeat: no-repeat;
+  display: block;
+  margin: 0 0 -5px -5px;
+  color: #fff;
+  line-height: 36px;
+  }
+.value {
+  font: 48px/36px OstrichSansMedium, 'League Gothic', 'Futura-CondensedMedium', 'Gill Sans MT Condensed', 'Arial Narrow', sans-serif;
+  color: #fff;
+  -moz-transition: color 0.3s linear;
+  -o-transition: color 0.3s linear;
+  -webkit-transition: color 0.3s linear;
+  transition: color 0.3s linear;
+  display: block;
+  text-align: right;
+  width: 55px;
+  }
+.overview-value {
+  color: #ccc;
+  }
+.overview-label {
+  font-weight: 500;
+  color: #808080;
+  }
+.label {
+  font-weight: 500;
+  color: gray;
+  line-height: 13px;
+  font-size: 11px;
+  display: block;
+  }
+.overview {
+  font-size: 11px;
+  font-weight: bold;
+  }
+.big-number { 
+  font-size: 64px;
+  line-height: 52px;
+  width: 70px;
+  }
+
+/*-----------------------------------
+  Pages: Layout
+-------------------------------------*/
+#page {
+  margin-top: 90px;
+  }
+.content-top {
+  width: 680px;
+  margin: 0 0 10px 10px;
+  padding: 0 20px 20px 10px;
+  border-bottom: 1px solid #ccc;
+  }
+.content {
+  width: 680px;
+  padding: 0 20px 40px 20px;
+  float: left;
+  }
+.navigation {
+  float: left;
+  width: 230px;
+  margin-top: 55px;
+  margin-left: 10px;
+  }
+  .navigation ul {
+    background: white;
+    border: 1px solid #ccc;
+    }
+  .navigation ul li a {
+    display: block;
+    padding: 10px;
+    border-top: 1px solid #eee;
+    color: #606060;
+    }
+    .navigation ul li:first-child a {
+      border-top: none;
+      }
+    .navigation ul li a:hover,
+    .navigation ul li a.active {
+      background: #606060 url(images/sprite.png) repeat-x bottom;
+      color: white;
+      font-weight: bold;
+      text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+      border-color: #333;
+      border-left: 1px solid #333;
+      border-right: 1px solid #333;
+      position: relative;
+      left: -1px;
+      width: 208px;
+      }
+
+.source {
+  margin-top: 10px;    
+  } 
+  
+ /* --------------------------------------
+  Markup free clearing
+  Details: http: //perishablepress.com/press/2009/12/06/new-clearfix-hack
+----------------------------------------- */
+.clearfix:after {
+  content: '.';
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+  }
+
+* html .clearfix { height: 1%; } /* IE6 */
+*:first-child + html .clearfix { min-height: 1%; } /* IE7 */
+</style>
+
+</head>
+
+
+<body>
+  <div id='drawer'>
+    <div class="drawer-content" style="display: block;">
+        <div class="base overview clearfix">
+            <h2 class="title">Title of the layers ~ maps.</h2>
+            <p>A text explanation of the overall maps. For now, it would be static and remain there the whole time.</p>
+            <ul class="clearfix"></ul>
+            <ul class="clearfix"></ul>
+            <ul class="graphs clearfix"></ul>
+        </div>
+        
+        <div class="one section clearfix" data-section="base">
+        <h1>Layer one.</h1> 
+        <a href='#' class='active'>Base</a>
+        <p>A brief explanation of the contents of layer Base.</p>
+        </div>
+        
+        <div class="uno section clearfix" data-section="uno">
+        <h1>Layer two.</h1> 
+                <a href='#' class='active'>Uno</a>
+        <p>A brief explanation of the contents of layer Uno.</p>
+        </div>
+        
+        <div class="dos section clearfix" data-section="dos">
+        <h1>Layer three.</h1> 
+                <a href='#' class='active'>Dos</a>
+        <p>A brief explanation of the contents of layer Dos.</p>
+        </div>
+        
+        <div class="tres section clearfix last" data-section="tres">
+        <h1>Layer four.</h1> 
+                <a href='#' class='active'>Tres</a>
+        <p>A brief explanation of the contents of layer Tres.</p>
+        </div>
+      
+        <div class="tres section clearfix last" data-section="four">
+        <h1>Layer four + 1.</h1> 
+                <a href='#' class='active'>More Tres</a>
+        <p>A brief explanation of the contents of layer Tres.</p>
+        </div>
+    </div>
+</div>
+
+<div id='map'></div>    
+<script>
+var map = L.map('map').setView([25,-97.0348], 5);
+var layers = document.getElementById('drawer');
+
+
+addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/guilleme.ioc8642f.json?access_token=pk.eyJ1IjoiZ3VpbGxlbWUiLCJhIjoiN09VM21iQSJ9.9zeXdkDbZPiJ_Uxyn8xHDg'), 'base', 1);
+
+addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/ealp.if7ma9ah.json?access_token=pk.eyJ1IjoiZWFscCIsImEiOiI5LW11MUpBIn0.ZM03f7fyeLvmUDK-NeYZYw'), 'tres', 10);
+
+addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/ealp.if8cbch1.json?access_token=pk.eyJ1IjoiZWFscCIsImEiOiI5LW11MUpBIn0.ZM03f7fyeLvmUDK-NeYZYw'), 'four', 20);
+
+addLayer(L.mapbox.featureLayer('https://a.tiles.mapbox.com/v4/guilleme.ioc8642f/features.json?access_token=pk.eyJ1IjoiZ3VpbGxlbWUiLCJhIjoiN09VM21iQSJ9.9zeXdkDbZPiJ_Uxyn8xHDg'), 'uno', 100);
+
+addLayer(L.mapbox.featureLayer('https://a.tiles.mapbox.com/v4/guilleme.ioc9810a/features.json?access_token=pk.eyJ1IjoiZ3VpbGxlbWUiLCJhIjoiN09VM21iQSJ9.9zeXdkDbZPiJ_Uxyn8xHDg'), 'dos', 200);
+
+
+function addLayer(layer, section, zIndex) {
+    layer
+        .setZIndex(zIndex)
+        .addTo(map);
+
+    var $element = $('div[data-section="'+section+'"]');
+
+    $element.click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+            this.className = '';
+        } else {
+            map.addLayer(layer);
+            this.className = 'active';
+        }
+    });
+}
+</script>
+<script src="http://static.jsbin.com/js/render/edit.js?3.17.7"></script>
+<script>jsbinShowEdit({"static":"http://static.jsbin.com","root":"http://jsbin.com","csrf":"zfzNQE4EZFeCnnw5E5c9Aw2w"});</script>
+<script src="http://static.jsbin.com/js/vendor/eventsource.js?3.17.7"></script>
+<script src="http://static.jsbin.com/js/spike.js?3.17.7"></script>
+
+<script>
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-1656750-34']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ga);
+})();
+</script>
+
+</body>
+</html>
