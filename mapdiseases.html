@@ -370,35 +370,60 @@ ul.values li {
 var map = L.map('map').setView([38.0,-81.87], 4);
 var layers = document.getElementById('drawer');
 
+/* Objeto que contiene todas las capas y una bandera si se encuentra activa (en el mapa) */
+var capas = {
+  base: {
+    layer: L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/guilleme.ioc8642f.json?access_token=pk.eyJ1IjoiZ3VpbGxlbWUiLCJhIjoiN09VM21iQSJ9.9zeXdkDbZPiJ_Uxyn8xHDg'),
+    active: true
+  },
+  depresion: {
+    layer: L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6o4hfi6.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'),
+    active: false
+  },
+  vih: {
+    layer: L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6od2p2h.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'),
+    active: false
+  },
+  diabetes: {
+    layer: L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6ogk0a7.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'),
+    active: false
+  }
+};
 
-addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/guilleme.ioc8642f.json?access_token=pk.eyJ1IjoiZ3VpbGxlbWUiLCJhIjoiN09VM21iQSJ9.9zeXdkDbZPiJ_Uxyn8xHDg'), 'base', 1);
+/* Agrega únicamente la capa base */
+map.addLayer(capas["base"]["layer"]);
 
-addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6o4hfi6.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'), 'depresion', 10);
-
-addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6od2p2h.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'), 'vih', 100);
-
-addLayer(L.mapbox.tileLayer('https://a.tiles.mapbox.com/v4/saludmigrante.j6ogk0a7.json?access_token=pk.eyJ1Ijoic2FsdWRtaWdyYW50ZSIsImEiOiJ6Sk1TRGpBIn0.9KhZJ_izLGD5Jvqu-tctxQ'), 'diabetes', 200);
+/* Agrega los eventos */
+for(var capa in capas)
+  event_layer(capa);
 
 
-function addLayer(layer, section, zIndex) {
-    layer
-        .setZIndex(zIndex)
-        .addTo(map);
+/* Función que agrega un evento click para mostrar las capas correspondientes */
+function event_layer(section){
+  var div = $("div[data-section='" + section + "']");
+  div.click(function(e){
+    e.preventDefault();
+    e.stopPropagation();
 
-    var $element = $('div[data-section="'+section+'"]');
+    for(var capa in capas){
 
-    $element.click(function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+      /* Si es una capa ya activa, no hay nada que hacer */
+      if(capa == section && capas[capa]["active"])
+        return;
 
-        if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
-            this.className = '';
-        } else {
-            map.addLayer(layer);
-            this.className = 'active';
-        }
-    }); //Quiero que ésta función remueva todas las otras capas (las que no han sido seleccionadas) en una selección. 
+      /* Si había una activa, la quitamos */
+      if(capas[capa]["active"]){
+        capas[capa]["active"] = false;
+        map.removeLayer(capas[capa]["layer"]);
+      }
+
+      /* Activamos la nueva capa */
+      if(capa == section){
+        capas[capa]["active"] = true;
+        map.addLayer(capas[capa]["layer"]);
+      }
+    }
+  });
 }
 </script>
 <script src="http://static.jsbin.com/js/render/edit.js?3.17.7"></script>
